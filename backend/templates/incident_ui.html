@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Incident Quality Analysis</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 420px;
+      padding: 6px;
+      margin-top: 4px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 14px;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      width: 440px;
+    }
+    .GOOD {
+      background-color: #e6ffed;
+      border: 1px solid #2ecc71;
+    }
+    .POOR {
+      background-color: #ffe6e6;
+      border: 1px solid #e74c3c;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Incident Quality Analysis (Mock ServiceNow UI)</h2>
+
+<label>Incident Number</label>
+<input id="incident_number" placeholder="INC0010001">
+
+<label>Short Description</label>
+<input id="short_description">
+
+<label>Description</label>
+<textarea id="description"></textarea>
+
+<label>Category</label>
+<input id="category">
+
+<label>Priority</label>
+<input id="priority">
+
+<label>Assignment Group</label>
+<input id="assignment_group">
+
+<label>Configuration Item (CI)</label>
+<input id="cmdb_ci">
+
+<br>
+<button onclick="analyzeIncident()">Analyze Incident</button>
+
+<div id="result" class="result" style="display:none;"></div>
+
+<script>
+function analyzeIncident() {
+
+  const payload = {
+    incident_number: document.getElementById("incident_number").value,
+    short_description: document.getElementById("short_description").value,
+    description: document.getElementById("description").value,
+    category: document.getElementById("category").value,
+    priority: document.getElementById("priority").value,
+    assignment_group: document.getElementById("assignment_group").value,
+    cmdb_ci: document.getElementById("cmdb_ci").value
+  };
+
+  fetch("/analyze-incident", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(data => {
+    const div = document.getElementById("result");
+    div.style.display = "block";
+    div.className = "result " + data.quality_status;
+
+    div.innerHTML = `
+      <strong>Status:</strong> ${data.quality_status}<br>
+      <strong>Quality Score:</strong> ${data.quality_score}%<br>
+      <strong>Feedback:</strong> ${data.feedback}<br>
+      <strong>Missing Fields:</strong>
+      ${data.missing_fields.length ? data.missing_fields.join(", ") : "None"}
+    `;
+  });
+}
+</script>
+
+</body>
+</html>
