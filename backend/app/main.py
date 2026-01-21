@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from app.db.seed import seed_data
+from app.quality_engine import evaluate_incident_quality
 
 from app.schemas import IncidentPayload
 from app.quality_validator import validate_incident_quality
@@ -18,13 +20,16 @@ templates = Jinja2Templates(directory="templates")
 def health():
     return {"status": "UP"}
 
+@app.post("/analyze-incident")
+def analyze_incident(payload: IncidentPayload):
+    return evaluate_incident_quality(payload.dict())
 
 @app.post("/analyze-incident")
 def analyze_incident(payload: IncidentPayload):
     """
     API endpoint used by ServiceNow / UI
     """
-    result = validate_incident_quality(payload.dict())
+    result = evaluate_incident_quality(payload.dict())
 
     return {
         "incident_number": payload.incident_number,
@@ -44,3 +49,7 @@ def ui(request: Request):
         "incident_ui.html",
         {"request": request}
     )
+
+@app.on_event("startup")
+def startup_event():
+    seed_data()
